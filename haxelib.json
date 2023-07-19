@@ -1,0 +1,13 @@
+{
+    "name": "Lumod",
+    "description": "Framework for modding compiled classes with Lua.",
+    "license": "Apache",
+    "releasenote": "",
+    "contributors": [
+        "Snirozu"
+    ],
+    "version": "1.0.0",
+    "dependencies": {
+        "linc_luajit": ""
+    }
+}
