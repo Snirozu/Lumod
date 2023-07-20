@@ -28,62 +28,7 @@ class LuaScriptClass {
 
 					// add lua calls to the function
 					func.expr = macro {
-						if (__lua != null) {
-							__lua.close();
-						}
-
-						__scriptPath = lumod.Lumod.scriptPathHandler($v{className}, $v{scriptPath});
-						
-						if (lumod.Lumod.cache.existsScript(__scriptPath)) {
-							// initialize lua
-							var lua = llua.LuaL.newstate();
-
-							// initialize some stuff like basic lua libraries
-							llua.LuaL.openlibs(lua);
-							llua.Lua.init_callbacks(lua);
-
-							// load the file and execute it
-							llua.LuaL.dostring(lua, lumod.Lumod.cache.getScript(__scriptPath));
-
-							this.__lua = lua;
-
-							//add callbacks so the script has some purpose
-							luaAddCallback("close", function() {
-								llua.Lua.close(__lua);
-								__lua = null;
-							});
-
-							luaAddCallback("getProperty", function(name:String) {
-								return lumod.Reflected.getProperty(this, name);
-							});
-
-							luaAddCallback("setProperty", function(name:String, value:Dynamic) {
-								lumod.Reflected.setProperty(this, name, value);
-							});
-
-							luaAddCallback("callFunction", function(name:String, ?args:Array<Dynamic>) {
-								if (args == null) args = [];
-								return Reflect.callMethod(this, lumod.Reflected.getProperty(this, name), args);
-							});
-
-							luaAddCallback("hasField", function(name:String) {
-								return lumod.Reflected.hasField(this, name);
-							});
-
-							luaAddCallback("isPropertyFunction", function(name:String) {
-								return Reflect.isFunction(lumod.Reflected.getProperty(this, name));
-							});
-
-							luaAddCallback("isPropertyObject", function(name:String) {
-								return Reflect.isObject(lumod.Reflected.getProperty(this, name));
-							});
-
-							// call init function
-							luaCall("init", $a{callArgs});
-						}
-						else {
-							Sys.println(__scriptPath + ": Couldn't initialize LUA script for class \"" + $v{className} + "\" please create a new script in '" + lumod.Lumod.scriptsRootPath + __scriptPath + "'.");
-						}
+						luaLoad();
 
 						${func.expr}
 					};
@@ -289,6 +234,77 @@ class LuaScriptClass {
 			pos: pos,
 		};
 		daFields.push(luaAddCallback);
+
+		var luaLoad:Field = {
+			name: "luaLoad",
+			access: [Access.APublic],
+			doc: "Loads or reloads the Lua script instance.",
+			kind: FieldType.FFun({
+				ret: macro :Void,
+				args: [],
+				expr: macro {
+					if (__lua != null) {
+						__lua.close();
+						__lua = null;
+					}
+
+					__scriptPath = lumod.Lumod.scriptPathHandler($v{className}, $v{scriptPath});
+					
+					if (lumod.Lumod.cache.existsScript(__scriptPath)) {
+						// initialize lua
+						var lua = llua.LuaL.newstate();
+
+						// initialize some stuff like basic lua libraries
+						llua.LuaL.openlibs(lua);
+						llua.Lua.init_callbacks(lua);
+
+						// load the file and execute it
+						llua.LuaL.dostring(lua, lumod.Lumod.cache.getScript(__scriptPath));
+
+						this.__lua = lua;
+
+						//add callbacks so the script has some purpose
+						luaAddCallback("close", function() {
+							llua.Lua.close(__lua);
+							__lua = null;
+						});
+
+						luaAddCallback("getProperty", function(name:String) {
+							return lumod.Reflected.getProperty(this, name);
+						});
+
+						luaAddCallback("setProperty", function(name:String, value:Dynamic) {
+							lumod.Reflected.setProperty(this, name, value);
+						});
+
+						luaAddCallback("callFunction", function(name:String, ?args:Array<Dynamic>) {
+							if (args == null) args = [];
+							return Reflect.callMethod(this, lumod.Reflected.getProperty(this, name), args);
+						});
+
+						luaAddCallback("hasField", function(name:String) {
+							return lumod.Reflected.hasField(this, name);
+						});
+
+						luaAddCallback("isPropertyFunction", function(name:String) {
+							return Reflect.isFunction(lumod.Reflected.getProperty(this, name));
+						});
+
+						luaAddCallback("isPropertyObject", function(name:String) {
+							return Reflect.isObject(lumod.Reflected.getProperty(this, name));
+						});
+
+						// call init function
+						luaCall("init", []);
+					}
+					else {
+						Sys.println(__scriptPath + ": Couldn't initialize LUA script for class \"" + $v{className} + "\" please create a new script in '" + lumod.Lumod.scriptsRootPath + __scriptPath + "'.");
+					}
+				}
+			}),
+			pos: pos,
+		};
+		daFields.push(luaLoad);
 
 		var luaField:Field = {
 			name: "__lua",

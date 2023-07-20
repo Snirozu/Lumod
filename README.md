@@ -33,6 +33,7 @@ The first Lua function's value is stored in a local function variable called `lu
 * `luaGet(variable)` - Gets a global Lua variable from the loaded script and returns it's value.
 * `luaSet(variable, value)` - Creates or sets a global Lua variable in the loaded script to `value`.
 * `luaAddCallback(name, callback)` - Declares a new function in the Lua script with a callback to `callback`.
+* `luaLoad()` - Loads or reloads the Lua script instance.
 
 ## Print Example
 
