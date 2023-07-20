@@ -9,7 +9,7 @@ class LuaScriptClass {
 	 * 
 	 * Use it with: `@:build(lumod.LuaScriptClass.build())`
 	 * 
-	 * @param scriptPath specifies the file name of the script. ex. `"script.lua"`. By default it will be the class name with a ".lua" file type.
+	 * @param scriptPath specifies the file name of the script. ex. `"script.lua"`. This path will be modified by `Lumod.scriptPathHandler`.
 	 */
 	public static macro function build(?scriptPath:String = null):Array<Field> {
 		var fields = Context.getBuildFields();
@@ -17,8 +17,7 @@ class LuaScriptClass {
 		
 		var daFields = []; //fields to be returned
 
-		if (scriptPath == null)
-			scriptPath = Context.getLocalClass().get().name + ".lua";
+		var className = Context.getLocalClass().get().name;
 
 		for (field in fields) {
 			if (field.kind.getName() == "FFun" && !field.access.contains(AStatic)) { // check if the field is a function, also check if the field is not static
@@ -29,7 +28,13 @@ class LuaScriptClass {
 
 					// add lua calls to the function
 					func.expr = macro {
-						if (__lua == null && lumod.Lumod.cache.existsScript($v{scriptPath})) {
+						if (__lua != null) {
+							__lua.close();
+						}
+
+						__scriptPath = lumod.Lumod.scriptPathHandler($v{className}, $v{scriptPath});
+						
+						if (lumod.Lumod.cache.existsScript(__scriptPath)) {
 							// initialize lua
 							var lua = llua.LuaL.newstate();
 
@@ -38,7 +43,7 @@ class LuaScriptClass {
 							llua.Lua.init_callbacks(lua);
 
 							// load the file and execute it
-							llua.LuaL.dostring(lua, lumod.Lumod.cache.getScript($v{scriptPath}));
+							llua.LuaL.dostring(lua, lumod.Lumod.cache.getScript(__scriptPath));
 
 							this.__lua = lua;
 
@@ -77,7 +82,7 @@ class LuaScriptClass {
 							luaCall("init", $a{callArgs});
 						}
 						else {
-							Sys.println($v{scriptPath} + ": Couldn't initialize LUA script for class \"" + $v{Context.getLocalClass().get().name} + "\" please create a new script in '" + lumod.Lumod.scriptsRootPath + $v{scriptPath} + "'.");
+							Sys.println(__scriptPath + ": Couldn't initialize LUA script for class \"" + $v{className} + "\" please create a new script in '" + lumod.Lumod.scriptsRootPath + __scriptPath + "'.");
 						}
 
 						${func.expr}
@@ -147,7 +152,7 @@ class LuaScriptClass {
 									if (fieldType <= llua.Lua.LUA_TNIL)
 										valueType = "nil";
 							}
-							Sys.println($v{scriptPath} + " (" + func + "): Attempt to call a " + valueType + " value");
+							Sys.println(__scriptPath + " (" + func + "): Attempt to call a " + valueType + " value");
 						}
 
 						llua.Lua.pop(__lua, 1);
@@ -170,14 +175,14 @@ class LuaScriptClass {
 						var v = StringTools.trim(llua.Lua.tostring(__lua, -1) ?? "");
 						if (v != "") {
 							switch (status) {
-								case llua.Lua.LUA_ERRRUN: Sys.println($v{scriptPath} + ": Runtime Error");
-								case llua.Lua.LUA_ERRMEM: Sys.println($v{scriptPath} + ": Memory Allocation Error");
-								case llua.Lua.LUA_ERRERR: Sys.println($v{scriptPath} + ": Critical Error");
-								default: Sys.println($v{scriptPath} + ": Unknown Error");
+								case llua.Lua.LUA_ERRRUN: Sys.println(__scriptPath + ": Runtime Error");
+								case llua.Lua.LUA_ERRMEM: Sys.println(__scriptPath + ": Memory Allocation Error");
+								case llua.Lua.LUA_ERRERR: Sys.println(__scriptPath + ": Critical Error");
+								default: Sys.println(__scriptPath + ": Unknown Error");
 							}
 						}
 						else {
-							Sys.println($v{scriptPath} + ": Unknown Error");
+							Sys.println(__scriptPath + ": Unknown Error");
 						}
 						llua.Lua.pop(__lua, 1);
 						return null;
@@ -243,7 +248,7 @@ class LuaScriptClass {
 
 					var fieldType:Int = llua.Lua.type(__lua, -1);
 					if (fieldType == llua.Lua.LUA_TFUNCTION || fieldType <= llua.Lua.LUA_TNIL) {
-						Sys.println($v{scriptPath} + ': Property "' + global + '" is either null, local or a function');
+						Sys.println(__scriptPath + ': Property "' + global + '" is either null, local or a function');
 						llua.Lua.pop(__lua, 1);
 						return null;
 					}
@@ -292,6 +297,14 @@ class LuaScriptClass {
 			pos: pos,
 		};
 		daFields.push(luaField);
+
+		var scriptPathField:Field = {
+			name: "__scriptPath",
+			access: [Access.APrivate],
+			kind: FieldType.FVar(macro :Dynamic),
+			pos: pos,
+		};
+		daFields.push(scriptPathField);
 
 		return daFields;
 	}

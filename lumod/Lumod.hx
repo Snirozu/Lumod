@@ -23,4 +23,17 @@ class Lumod {
 	 * The cache of scripts. Can be changed to your own class but it must extend `lumod.Cache`.
 	 */
 	public static var cache:Cache = new Cache();
+
+	/**
+	 * Dynamic function that handles the destination path of the script file.
+	 * This can be useful if you want to use more than one mod.
+	 * @param cls The class name
+	 * @param scriptPath The provided path in the `LuaScriptClass.build` macro.
+	 * @return Path that will begin from `scriptsRootPath`.
+	 */
+	public static dynamic function scriptPathHandler(cls:String, scriptPath:String):String {
+		if (scriptPath == null)
+			return scriptPath = cls + ".lua";
+		return scriptPath;
+	}
 }
