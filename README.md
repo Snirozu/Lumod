@@ -35,12 +35,12 @@ The first Lua function's value is stored in a local function variable called `lu
 * `luaLoad()` - Loads or reloads the Lua script instance.
 
 ## Pre-defined Functions (HScript)
-To enable HScript use `LUMOD_HSCRIPT` Haxe Define to the project configuration. <br>
+To enable HScript use `LUMOD_HSCRIPT` Haxe Define in the project configuration. <br>
 ### Lua Script
 * `haxeRun(code)` - Runs Haxe code via HScript interpreter.
 * `haxeSet(variable, value)` - Sets a property in a HScript interpreter to a value.
 * `haxeImport(class, ?as)` - Imports a class to the HScript interpreter, if `as` is specified, the class will be defined as the specified name.
-### Haxe classs
+### Haxe class
 * `hscriptSet(variable, value)` - Sets a property in a HScript interpreter to a value.
 
 ## Print Example
