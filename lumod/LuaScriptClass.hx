@@ -309,7 +309,7 @@ class LuaScriptClass {
 		var luaField:Field = {
 			name: "__lua",
 			access: [Access.APrivate],
-			kind: FieldType.FVar(macro :Dynamic),
+			kind: FieldType.FVar(macro : llua.State),
 			pos: pos,
 		};
 		daFields.push(luaField);
@@ -317,7 +317,7 @@ class LuaScriptClass {
 		var scriptPathField:Field = {
 			name: "__scriptPath",
 			access: [Access.APrivate],
-			kind: FieldType.FVar(macro :Dynamic),
+			kind: FieldType.FVar(macro : String),
 			pos: pos,
 		};
 		daFields.push(scriptPathField);
