@@ -145,7 +145,7 @@ class LuaScriptClass {
 
 		var luaSet:Field = {
 			name: "luaSet",
-			doc: "Sets `variable` in the Lua script to `value`, and creates it if it doesn't exists.",
+			doc: "Sets `variable` in the Lua" + #if LUMOD_HSCRIPT " and HScript Interpreter" + #end " script to `value`, and creates it if it doesn't exists.",
 			access: [Access.APublic],
 			kind: FieldType.FFun({
 				ret: macro :Void,
@@ -166,11 +166,46 @@ class LuaScriptClass {
 
 					llua.Convert.toLua(__lua, value);
 					llua.Lua.setglobal(__lua, variable);
+
+					#if LUMOD_HSCRIPT
+					if (__hscriptInterp == null)
+						__hscriptInterp.variables.set(variable, value);
+					#end
 				}
 			}),
 			pos: pos,
 		};
 		daFields.push(luaSet);
+
+		#if LUMOD_HSCRIPT
+		var hscriptSet:Field = {
+			name: "hscriptSet",
+			doc: "Sets `variable` in the HScript Interpreter to `value`, and creates it if it doesn't exists.",
+			access: [Access.APublic],
+			kind: FieldType.FFun({
+				ret: macro :Void,
+				args: [
+					{
+						name: "variable",
+						type: macro :String
+					},
+					{
+						name: "value",
+						type: macro :Dynamic
+					}
+				],
+				expr: macro {
+					if (__hscriptInterp == null) {
+						return;
+					}
+
+					__hscriptInterp.variables.set(variable, value);
+				}
+			}),
+			pos: pos,
+		};
+		daFields.push(hscriptSet);
+		#end
 
 		var luaGet:Field = {
 			name: "luaGet",
@@ -258,9 +293,6 @@ class LuaScriptClass {
 						llua.LuaL.openlibs(lua);
 						llua.Lua.init_callbacks(lua);
 
-						// load the file and execute it
-						llua.LuaL.dostring(lua, lumod.Lumod.cache.getScript(__scriptPath));
-
 						this.__lua = lua;
 
 						//add callbacks so the script has some purpose
@@ -294,8 +326,38 @@ class LuaScriptClass {
 							return Reflect.isObject(lumod.Reflected.getProperty(this, name));
 						});
 
-						// call init function
-						luaCall("init", []);
+						#if LUMOD_HSCRIPT
+						__hscriptParser = new hscript.Parser();
+						__hscriptInterp = new hscript.Interp();
+
+						__hscriptInterp.variables.set("this", this);
+						__hscriptInterp.variables.set("Reflected", lumod.Reflected);
+
+						luaAddCallback("haxeRun", function(expr:String) {
+							try {
+								var ast = __hscriptParser.parseString(expr);
+								return __hscriptInterp.execute(ast);
+							}
+							catch (exc : hscript.Expr.Error) {
+								Sys.println(exc);
+							}
+							return null;
+						});
+
+						luaAddCallback("haxeSetProperty", function(name:String, value:String) {
+							if (__hscriptInterp != null)
+								__hscriptInterp.variables.set(name, value);
+						});
+
+						luaAddCallback("haxeImport", function(cl:String, ?as:String) {
+							var clSplit = cl.split(".");
+							if (__hscriptInterp != null)
+								__hscriptInterp.variables.set(as ?? clSplit[clSplit.length - 1], Type.resolveClass(cl));
+						});
+						#end
+
+						// load the file and execute it
+						llua.LuaL.dostring(lua, lumod.Lumod.cache.getScript(__scriptPath));
 					}
 					else {
 						Sys.println(__scriptPath + ": Couldn't initialize LUA script for class \"" + $v{className} + "\" please create a new script in '" + lumod.Lumod.scriptsRootPath + __scriptPath + "'.");
@@ -321,6 +383,24 @@ class LuaScriptClass {
 			pos: pos,
 		};
 		daFields.push(scriptPathField);
+
+		#if LUMOD_HSCRIPT
+		var luaField:Field = {
+			name: "__hscriptParser",
+			access: [Access.APrivate],
+			kind: FieldType.FVar(macro : hscript.Parser),
+			pos: pos,
+		};
+		daFields.push(luaField);
+
+		var luaField:Field = {
+			name: "__hscriptInterp",
+			access: [Access.APrivate],
+			kind: FieldType.FVar(macro : hscript.Interp),
+			pos: pos,
+		};
+		daFields.push(luaField);
+		#end
 
 		return daFields;
 	}

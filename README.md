@@ -1,6 +1,5 @@
 # Lumod
-Experimental framework for modding compiled classes with Lua using Haxe macros and linc_luajit.
-Inspired by Polymod's HScriptables.
+Framework for modding compiled classes with Lua using Haxe macros and linc_luajit.
 
 ## How to use this??
 ### Setup
@@ -8,7 +7,7 @@ Firstly, install linc_luajit using:
 ```
 haxelib git linc_luajit https://github.com/AndreiRudenko/linc_luajit
 ```
-Secondly, install this library using:
+Then, install Lumod using:
 ```
 haxelib git lumod https://github.com/Snirozu/lumod
 ```
@@ -34,6 +33,15 @@ The first Lua function's value is stored in a local function variable called `lu
 * `luaSet(variable, value)` - Creates or sets a global Lua variable in the loaded script to `value`.
 * `luaAddCallback(name, callback)` - Declares a new function in the Lua script with a callback to `callback`.
 * `luaLoad()` - Loads or reloads the Lua script instance.
+
+## Pre-defined Functions (HScript)
+To enable HScript use `LUMOD_HSCRIPT` Haxe Define to the project configuration. <br>
+### Lua Script
+* `haxeRun(code)` - Runs Haxe code via HScript interpreter.
+* `haxeSetProperty(variable, value)` - Sets a property in a HScript interpreter to a value.
+* `haxeImport(class, ?as)` - Imports a class to the HScript interpreter, if `as` is specified, the class will be defined as the specified name.
+### Haxe classs
+* `hscriptSet(variable, value)` - Sets a property in a HScript interpreter to a value.
 
 ## Print Example
 
