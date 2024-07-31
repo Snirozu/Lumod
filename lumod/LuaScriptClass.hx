@@ -244,7 +244,7 @@ class LuaScriptClass {
 				args: [],
 				expr: macro {
 					if (__lua != null) {
-						__lua.close();
+						llua.Lua.close(__lua);
 						__lua = null;
 					}
 
