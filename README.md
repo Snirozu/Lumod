@@ -38,7 +38,7 @@ The first Lua function's value is stored in a local function variable called `lu
 To enable HScript use `LUMOD_HSCRIPT` Haxe Define to the project configuration. <br>
 ### Lua Script
 * `haxeRun(code)` - Runs Haxe code via HScript interpreter.
-* `haxeSetProperty(variable, value)` - Sets a property in a HScript interpreter to a value.
+* `haxeSet(variable, value)` - Sets a property in a HScript interpreter to a value.
 * `haxeImport(class, ?as)` - Imports a class to the HScript interpreter, if `as` is specified, the class will be defined as the specified name.
 ### Haxe classs
 * `hscriptSet(variable, value)` - Sets a property in a HScript interpreter to a value.

@@ -344,7 +344,7 @@ class LuaScriptClass {
 							return null;
 						});
 
-						luaAddCallback("haxeSetProperty", function(name:String, value:String) {
+						luaAddCallback("haxeSet", function(name:String, value:String) {
 							if (__hscriptInterp != null)
 								__hscriptInterp.variables.set(name, value);
 						});
