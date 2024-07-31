@@ -6,18 +6,28 @@ import haxe.io.Path;
 class Lumod {
     /**
      * The root path of all scripts.
+	 * Value of this variable can be overwritten by `get_scriptsRootPath`
      * 
      * ex. `LuaScriptClass.build("script.lua")` will find a script "script.lua" in the `scriptsRootPath` directory
      */
-    public static var scriptsRootPath(default, set):String = "";
-	static function set_scriptsRootPath(value:String):String {
-		scriptsRootPath = Path.addTrailingSlash(Path.normalize(value));
+    public static var scriptsRootPath(get, set):String;
+	private static var _scriptsRootPath:String = "";
 
-		if (!FileSystem.exists(scriptsRootPath)) {
-			FileSystem.createDirectory(scriptsRootPath);
+	/**
+	 * Getter for the root path of all scripts.
+	 */
+	public static dynamic function get_scriptsRootPath() {
+		return _scriptsRootPath;
+	}
+	
+	static function set_scriptsRootPath(value:String):String {
+		_scriptsRootPath = Path.addTrailingSlash(Path.normalize(value));
+
+		if (!FileSystem.exists(_scriptsRootPath)) {
+			FileSystem.createDirectory(_scriptsRootPath);
         }
 
-		return scriptsRootPath;
+		return _scriptsRootPath;
 	}
 	/**
 	 * The cache of scripts. Can be changed to your own class but it must extend `lumod.Cache`.
