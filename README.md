@@ -24,7 +24,7 @@ The first Lua function's value is stored in a local function variable called `lu
 * `close()` - Closes current Lua script.
 * `getProperty(name)` - Gets a property from some class, by default it's the current haxe instance of current script. For example you can get the window of HaxeFlixel's game's width with `getProperty("flixel.FlxG.width")`.
 * `setProperty(name, value)` - Basically works the same as the `getProperty` function but sets a value instead of getting it.
-* `callFunction(function, arguments)` - Retrieves the function with the same technique as the `getProperty` function but instead of getting the property, it calls it like a method. Example usage: `callFunction(flixel.math.FlxMath.roundDecimal, [1.2485, 2])`.
+* `callFunction(function, arguments)` - Retrieves the function with the same technique as the `getProperty` function but instead of getting the property, it calls it like a method. Example usage: `callFunction("flixel.math.FlxMath.roundDecimal", [1.2485, 2])`.
 * `hasField(name)` - Checks if a property exists.
 * `isPropertyFunction(name)` - Checks if a property is a function.
 * `isPropertyObject(name)` - Checks if a property is a object.
