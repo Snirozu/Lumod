@@ -7,7 +7,7 @@ class Reflected {
 		var object:Dynamic = instance;
 		if (!_hasField(object, fieldPath[0])) {
 			var paths = _getClassFromFieldPath(fieldPath);
-			object = Type.resolveClass(paths[0]);
+			object = Lumod.classResolver(paths[0]);
 			fieldPath = paths[1].split(".");
         }
 
@@ -24,7 +24,7 @@ class Reflected {
 		var object:Dynamic = instance;
 		if (!_hasField(object, fieldPath[0])) {
 			var paths = _getClassFromFieldPath(fieldPath);
-			object = Type.resolveClass(paths[0]);
+			object = Lumod.classResolver(paths[0]);
 			fieldPath = paths[1].split(".");
 		}
 
@@ -46,7 +46,7 @@ class Reflected {
 		var object:Dynamic = instance;
 		if (!_hasField(object, fieldPath[0])) {
 			var paths = _getClassFromFieldPath(fieldPath);
-			object = Type.resolveClass(paths[0]);
+			object = Lumod.classResolver(paths[0]);
 			fieldPath = paths[1].split(".");
 		}
 

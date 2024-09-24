@@ -1,5 +1,5 @@
 {
-    "name": "Lumod",
+    "name": "lumod",
     "description": "Framework for modding compiled classes with Lua.",
     "license": "Apache",
     "releasenote": "",
@@ -9,5 +9,10 @@
     "version": "1.0.0",
     "dependencies": {
         "linc_luajit": ""
-    }
+    },
+    "url": "https://github.com/Snirozu/Lumod",
+    "tags": [
+        "mod",
+        "macro"
+    ]
 }
