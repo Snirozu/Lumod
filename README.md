@@ -9,7 +9,7 @@ haxelib git linc_luajit https://github.com/AndreiRudenko/linc_luajit
 ```
 Then, install Lumod using:
 ```
-haxelib git lumod https://github.com/Snirozu/lumod
+haxelib install lumod
 ```
 Then basically you can use `lumod.LuaScriptClass.build("script.lua")` build macro in your project in any class. <br>
 Optionally if you want to change the Lua scripts directory, use `Lumod.scriptsRootPath = "newdirectory"` in the initial function of your project.
