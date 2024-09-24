@@ -52,7 +52,6 @@ class Lumod {
 	 * You can use this function to reject certain classes or resolve them in your own way.
 	 * @param clsPath The path to the class
 	 */
-	@:unreflective
 	public static dynamic function classResolver(clsPath:String):Class<Dynamic> {
 		return Type.resolveClass(clsPath);
 	}
