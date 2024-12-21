@@ -1,1 +1,2 @@
 --library linc_luajit
+--library flixel

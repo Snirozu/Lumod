@@ -1,34 +1,8 @@
 package lumod;
 
-import sys.FileSystem;
-import haxe.io.Path;
+import lumod.addons.LumodAddon;
 
 class Lumod {
-    /**
-     * The root path of all scripts.
-	 * Value of this variable can be overwritten by `get_scriptsRootPath`
-     * 
-     * ex. `LuaScriptClass.build("script.lua")` will find a script "script.lua" in the `scriptsRootPath` directory
-     */
-    public static var scriptsRootPath(get, set):String;
-	private static var _scriptsRootPath:String = "";
-
-	/**
-	 * Getter for the root path of all scripts.
-	 */
-	public static dynamic function get_scriptsRootPath() {
-		return _scriptsRootPath;
-	}
-	
-	static function set_scriptsRootPath(value:String):String {
-		_scriptsRootPath = Path.addTrailingSlash(Path.normalize(value));
-
-		if (!FileSystem.exists(_scriptsRootPath)) {
-			FileSystem.createDirectory(_scriptsRootPath);
-        }
-
-		return _scriptsRootPath;
-	}
 	/**
 	 * The cache of scripts. Can be changed to your own class but it must extend `lumod.Cache`.
 	 */
@@ -36,15 +10,12 @@ class Lumod {
 
 	/**
 	 * Dynamic function that handles the destination path of the script file.
-	 * This can be useful if you want to use more than one mod.
-	 * @param cls The class name
+	 * This can be useful if you want to handle more than one scripts.
 	 * @param scriptPath The provided path in the `LuaScriptClass.build` macro.
-	 * @return Path that will begin from `scriptsRootPath`.
+	 * @return Path to the script.
 	 */
-	public static dynamic function scriptPathHandler(cls:String, scriptPath:String):String {
-		if (scriptPath == null)
-			return scriptPath = cls + ".lua";
-		return scriptPath;
+	public static dynamic function scriptPathHandler(scriptPath:String):String {
+		return 'lumod/' + scriptPath;
 	}
 
 	/**
@@ -55,4 +26,14 @@ class Lumod {
 	public static dynamic function classResolver(clsPath:String):Class<Dynamic> {
 		return Type.resolveClass(clsPath);
 	}
+
+	/**
+	 * The list of addons that will be implemented everytime a class gets initialized.
+	 * **TIP:** It is recommended to use `#if macro ... #end` on a operation that adds your addon to this list.
+	 */
+	public static var addons(default, never):Array<Class<LumodAddon>> = [
+		#if (flixel && !macro)
+		lumod.addons.FlixelAddon,
+		#end
+	];
 }

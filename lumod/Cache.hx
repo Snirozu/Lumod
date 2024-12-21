@@ -12,17 +12,17 @@ class Cache {
 
 	public function existsScript(path:String) {
 		if (scripts.exists(path)) return true;
-		return FileSystem.exists(Lumod.scriptsRootPath + path);
+		return FileSystem.exists(path);
 	}
 
 	public function getScript(path:String) {
 		if (scripts.exists(path)) // avoid unnecessary filesystem calls
 			return scripts.get(path);
 
-		if (!FileSystem.exists(Lumod.scriptsRootPath + path))
+		if (!FileSystem.exists(path))
 			return null;
 
-		scripts.set(path, File.getContent(Lumod.scriptsRootPath + path));
+		scripts.set(path, File.getContent(path));
 		return scripts.get(path);
 	}
 }

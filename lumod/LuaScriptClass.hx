@@ -9,7 +9,7 @@ class LuaScriptClass {
 	 * 
 	 * Use it with: `@:build(lumod.LuaScriptClass.build())`
 	 * 
-	 * @param scriptPath specifies the file name of the script. ex. `"script.lua"`. This path will be modified by `Lumod.scriptPathHandler`.
+	 * @param scriptPath specifies the file name of the script. ex. `"script.lua"`.
 	 */
 	public static macro function build(?scriptPath:String = null):Array<Field> {
 		var fields = Context.getBuildFields();
@@ -18,6 +18,11 @@ class LuaScriptClass {
 		var daFields = []; //fields to be returned
 
 		var className = Context.getLocalClass().get().name;
+
+		var preDefFuncs:Map<String, Dynamic> = new Map<String, Dynamic>();
+
+		if (scriptPath == null)
+			scriptPath = Context.getLocalClass().get().name + ".lua";
 
 		for (field in fields) {
 			if (field.kind.getName() == "FFun" && !field.access.contains(AStatic)) { // check if the field is a function, also check if the field is not static
@@ -28,9 +33,11 @@ class LuaScriptClass {
 
 					// add lua calls to the function
 					func.expr = macro {
-						luaLoad();
+						lmLoad();
 
 						${func.expr}
+
+						lmCall("new", $a{callArgs});
 					};
 
 					field.kind = FFun(func);
@@ -43,11 +50,11 @@ class LuaScriptClass {
 
 					// add lua calls to the function
 					func.expr = macro {
-						var luaValue:Dynamic = luaCall($v{field.name}, $a{callArgs});
+						var luaValue:Dynamic = lmCall($v{field.name}, $a{callArgs});
 
 						${func.expr}
 
-						luaCall($v{field.name} + "_post", $a{callArgs});
+						lmCall($v{field.name} + "_post", $a{callArgs});
 					};
 
 					field.kind = FFun(func);
@@ -57,8 +64,8 @@ class LuaScriptClass {
 		}
 
 		//backend functions or idk
-		var luaCall:Field = {
-			name: "luaCall",
+		var lmCall:Field = {
+			name: "lmCall",
 			doc: "Calls a function declared in the Lua script.",
 			access: [Access.APublic],
 			kind: FieldType.FFun({
@@ -141,11 +148,11 @@ class LuaScriptClass {
 			}),
 			pos: pos,
 		};
-		daFields.push(luaCall);
+		daFields.push(lmCall);
 
-		var luaSet:Field = {
-			name: "luaSet",
-			doc: "Sets `variable` in the Lua" + #if LUMOD_HSCRIPT " and HScript Interpreter" + #end " script to `value`, and creates it if it doesn't exists.",
+		var lmSet:Field = {
+			name: "lmSet",
+			doc: "Sets `variable` in the Lua" + #if LUMOD_HSCRIPT " and HScript " + #end " script to `value`, and creates it if it doesn't exists.",
 			access: [Access.APublic],
 			kind: FieldType.FFun({
 				ret: macro :Void,
@@ -175,7 +182,7 @@ class LuaScriptClass {
 			}),
 			pos: pos,
 		};
-		daFields.push(luaSet);
+		daFields.push(lmSet);
 
 		#if LUMOD_HSCRIPT
 		var hscriptSet:Field = {
@@ -207,8 +214,8 @@ class LuaScriptClass {
 		daFields.push(hscriptSet);
 		#end
 
-		var luaGet:Field = {
-			name: "luaGet",
+		var lmGet:Field = {
+			name: "lmGet",
 			doc: "Gets a global variable from the Lua script. `local` variables will return `null`.",
 			access: [Access.APublic],
 			kind: FieldType.FFun({
@@ -240,10 +247,10 @@ class LuaScriptClass {
 			}),
 			pos: pos,
 		};
-		daFields.push(luaGet);
+		daFields.push(lmGet);
 
-		var luaAddCallback:Field = {
-			name: "luaAddCallback",
+		var lmAddCallback:Field = {
+			name: "lmAddCallback",
 			access: [Access.APublic],
 			doc: "Declares a new function in the Lua script.",
 			kind: FieldType.FFun({
@@ -268,10 +275,10 @@ class LuaScriptClass {
 			}),
 			pos: pos,
 		};
-		daFields.push(luaAddCallback);
+		daFields.push(lmAddCallback);
 
-		var luaLoad:Field = {
-			name: "luaLoad",
+		var lmLoad:Field = {
+			name: "lmLoad",
 			access: [Access.APublic],
 			doc: "Loads or reloads the Lua script instance.",
 			kind: FieldType.FFun({
@@ -283,7 +290,7 @@ class LuaScriptClass {
 						__lua = null;
 					}
 
-					__scriptPath = lumod.Lumod.scriptPathHandler($v{className}, $v{scriptPath});
+					__scriptPath = lumod.Lumod.scriptPathHandler($v{scriptPath});
 					
 					if (lumod.Lumod.cache.existsScript(__scriptPath)) {
 						// initialize lua
@@ -296,33 +303,33 @@ class LuaScriptClass {
 						this.__lua = lua;
 
 						//add callbacks so the script has some purpose
-						luaAddCallback("close", function() {
+						lmAddCallback("close", function() {
 							llua.Lua.close(__lua);
 							__lua = null;
 						});
 
-						luaAddCallback("getProperty", function(name:String) {
+						lmAddCallback("getProperty", function(name:String) {
 							return lumod.Reflected.getProperty(this, name);
 						});
 
-						luaAddCallback("setProperty", function(name:String, value:Dynamic) {
+						lmAddCallback("setProperty", function(name:String, value:Dynamic) {
 							lumod.Reflected.setProperty(this, name, value);
 						});
 
-						luaAddCallback("callFunction", function(name:String, ?args:Array<Dynamic>) {
+						lmAddCallback("callFunction", function(name:String, ?args:Array<Dynamic>) {
 							if (args == null) args = [];
 							return Reflect.callMethod(this, lumod.Reflected.getProperty(this, name), args);
 						});
 
-						luaAddCallback("hasField", function(name:String) {
+						lmAddCallback("hasField", function(name:String) {
 							return lumod.Reflected.hasField(this, name);
 						});
 
-						luaAddCallback("isPropertyFunction", function(name:String) {
+						lmAddCallback("isPropertyFunction", function(name:String) {
 							return Reflect.isFunction(lumod.Reflected.getProperty(this, name));
 						});
 
-						luaAddCallback("isPropertyObject", function(name:String) {
+						lmAddCallback("isPropertyObject", function(name:String) {
 							return Reflect.isObject(lumod.Reflected.getProperty(this, name));
 						});
 
@@ -333,7 +340,7 @@ class LuaScriptClass {
 						__hscriptInterp.variables.set("this", this);
 						__hscriptInterp.variables.set("Reflected", lumod.Reflected);
 
-						luaAddCallback("haxeRun", function(expr:String) {
+						lmAddCallback("haxeRun", function(expr:String) {
 							try {
 								var ast = __hscriptParser.parseString(expr);
 								return __hscriptInterp.execute(ast);
@@ -344,29 +351,33 @@ class LuaScriptClass {
 							return null;
 						});
 
-						luaAddCallback("haxeSet", function(name:String, value:String) {
+						lmAddCallback("haxeSet", function(name:String, value:String) {
 							if (__hscriptInterp != null)
 								__hscriptInterp.variables.set(name, value);
 						});
 
-						luaAddCallback("haxeImport", function(cl:String, ?as:String) {
+						lmAddCallback("haxeImport", function(cl:String, ?as:String) {
 							var clSplit = cl.split(".");
 							if (__hscriptInterp != null)
 								__hscriptInterp.variables.set(as ?? clSplit[clSplit.length - 1], Type.resolveClass(cl));
 						});
 						#end
 
+						for (addonClass in lumod.Lumod.addons) {
+							lmAddons.push(Type.createInstance(addonClass, [this]));
+						}
+
 						// load the file and execute it
 						llua.LuaL.dostring(lua, lumod.Lumod.cache.getScript(__scriptPath));
 					}
-					else {
-						Sys.println(__scriptPath + ": Couldn't initialize LUA script for class \"" + $v{className} + "\" please create a new script in '" + lumod.Lumod.scriptsRootPath + __scriptPath + "'.");
+					else if (__scriptPath != null) {
+						Sys.println(__scriptPath + ": Couldn't initialize LUA script for class \"" + $v{className} + "\" please create a new script in '" + __scriptPath + "'.");
 					}
 				}
 			}),
 			pos: pos,
 		};
-		daFields.push(luaLoad);
+		daFields.push(lmLoad);
 
 		var luaField:Field = {
 			name: "__lua",
@@ -401,6 +412,24 @@ class LuaScriptClass {
 		};
 		daFields.push(luaField);
 		#end
+
+		var objectsField:Field = {
+			name: "lmObjects",
+			access: [Access.APublic],
+			kind: FieldType.FVar(macro : Map<String, Dynamic>, macro new Map<String, Dynamic>()),
+			pos: pos,
+			doc: 'This field stores objects created in the Lua script.'
+		};
+		daFields.push(objectsField);
+
+		var sclField:Field = {
+			name: "lmAddons",
+			access: [Access.APrivate],
+			kind: FieldType.FVar(macro :Array<lumod.addons.LumodAddon>, macro $v{[]}),
+			pos: pos,
+			doc: 'This field stores the currently running addons.'
+		};
+		daFields.push(sclField);
 
 		return daFields;
 	}

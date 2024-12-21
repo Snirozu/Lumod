@@ -1,18 +1,21 @@
 {
     "name": "lumod",
-    "description": "Framework for modding compiled classes with Lua.",
+    "description": "Framework for modding Haxe classes with Lua at runtime!",
     "license": "Apache",
-    "releasenote": "",
+    "releasenote": "https://lib.haxe.org/p/lumod/2.0.0/files/CHANGELOG.md",
     "contributors": [
         "Snirozu"
     ],
-    "version": "1.0.0",
+    "version": "2.0.0",
     "dependencies": {
         "linc_luajit": ""
     },
     "url": "https://github.com/Snirozu/Lumod",
     "tags": [
         "mod",
-        "macro"
+        "macro",
+        "cpp",
+        "game",
+        "flixel"
     ]
 }

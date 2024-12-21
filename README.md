@@ -3,16 +3,12 @@ Framework for modding compiled classes with Lua using Haxe macros and linc_luaji
 
 ## How to use this??
 ### Setup
-Firstly, install linc_luajit using:
+Install using:
 ```
 haxelib git linc_luajit https://github.com/AndreiRudenko/linc_luajit
-```
-Then, install Lumod using:
-```
 haxelib install lumod
 ```
-Then basically you can use `lumod.LuaScriptClass.build("script.lua")` build macro in your project in any class. <br>
-Optionally if you want to change the Lua scripts directory, use `Lumod.scriptsRootPath = "newdirectory"` in the initial function of your project.
+Then you can use `lumod.LuaScriptClass.build("script.lua")` build macro in your project in any class. <br>
 
 ### How Lumod works
 Every non-static function calls it's Lua script counterpart before it's code (lua function: `function`), and after it's code (lua function: `function_post`). <br>
@@ -28,11 +24,11 @@ The first Lua function's value is stored in a local function variable called `lu
 * `isPropertyFunction(name)` - Checks if a property is a function.
 * `isPropertyObject(name)` - Checks if a property is a object.
 ### Haxe class
-* `luaCall(function, arguments)` - Calls a Lua function from the loaded script and returns it's value.
-* `luaGet(variable)` - Gets a global Lua variable from the loaded script and returns it's value.
-* `luaSet(variable, value)` - Creates or sets a global Lua variable in the loaded script to `value`.
-* `luaAddCallback(name, callback)` - Declares a new function in the Lua script with a callback to `callback`.
-* `luaLoad()` - Loads or reloads the Lua script instance.
+* `lmCall(function, arguments)` - Calls a Lua function from the loaded script and returns it's value.
+* `lmGet(variable)` - Gets a global Lua variable from the loaded script and returns it's value.
+* `lmSet(variable, value)` - Creates or sets a global Lua (and HScript) variable in the loaded script to `value`.
+* `lmAddCallback(name, callback)` - Declares a new function in the Lua script with a callback to `callback`.
+* `lmLoad()` - Loads or reloads the Lua script instance.
 
 ## Pre-defined Functions (HScript)
 To enable HScript use `LUMOD_HSCRIPT` Haxe Define in the project configuration. <br>
