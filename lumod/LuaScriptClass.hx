@@ -86,64 +86,29 @@ class LuaScriptClass {
 						return null;
 					}
 
-					// select lua field
-					llua.Lua.getglobal(__lua, func);
+					try @:privateAccess {
+						#if linc_lua
+						vm.lua.Api.lua_getglobal(__lua.l, func);
+						for (arg in args)
+							vm.lua.Lua.toLuaValue(__lua.l, arg);
 
-					// catch errors (from psych engine)
-					var fieldType:Int = llua.Lua.type(__lua, -1);
-					if (fieldType != llua.Lua.LUA_TFUNCTION) {
-						if (fieldType > llua.Lua.LUA_TNIL) {
-							var valueType = "unknown";
-							switch (fieldType) {
-								case llua.Lua.LUA_TBOOLEAN: valueType = "boolean";
-								case llua.Lua.LUA_TNUMBER: valueType = "number";
-								case llua.Lua.LUA_TSTRING: valueType = "string";
-								case llua.Lua.LUA_TTABLE: valueType = "table";
-								case llua.Lua.LUA_TFUNCTION: valueType = "function";
-								default:
-									if (fieldType <= llua.Lua.LUA_TNIL)
-										valueType = "nil";
-							}
-							Sys.println(__scriptPath + " (" + func + "): Attempt to call a " + valueType + " value");
-						}
+						var res = vm.lua.Api.lua_pcall(__lua.l, args.length, 1, 0);
 
-						llua.Lua.pop(__lua, 1);
-						return null;
+						if (res == vm.lua.Api.OK)
+							return vm.lua.Lua.getReturnValues(__lua.l)
+						else if (res == 2)
+							return null; // if the caller function doesn't exist then return null
+						else
+							throw vm.lua.Lua.getErrorMessage(__lua.l);
+						#else
+						return __lua.call(func, args);
+						#end
+					}
+					catch (exc:Any) {
+						Sys.println("ERROR (" + func + "): " + exc);
 					}
 
-					if (args == null) {
-						args = [];
-					}
-					// append arguments (up to 5)
-					for (arg in args) {
-						llua.Convert.toLua(__lua, arg);
-					}
-
-					// try to call this function and return it's status
-					var status:Int = llua.Lua.pcall(__lua, args.length, 1, 0);
-
-					// catch some errors (also from psych engine)
-					if (status != llua.Lua.LUA_OK) {
-						var v = StringTools.trim(llua.Lua.tostring(__lua, -1) ?? "");
-						if (v != "") {
-							switch (status) {
-								case llua.Lua.LUA_ERRRUN: Sys.println(__scriptPath + ": Runtime Error");
-								case llua.Lua.LUA_ERRMEM: Sys.println(__scriptPath + ": Memory Allocation Error");
-								case llua.Lua.LUA_ERRERR: Sys.println(__scriptPath + ": Critical Error");
-								default: Sys.println(__scriptPath + ": Unknown Error");
-							}
-						}
-						else {
-							Sys.println(__scriptPath + ": Unknown Error");
-						}
-						llua.Lua.pop(__lua, 1);
-						return null;
-					}
-
-					// finally get the returned value from the called function
-					var result:Dynamic = cast llua.Convert.fromLua(__lua, -1);
-					llua.Lua.pop(__lua, 1);
-					return result;
+					return null;
 				}
 			}),
 			pos: pos,
@@ -152,7 +117,7 @@ class LuaScriptClass {
 
 		var lmSet:Field = {
 			name: "lmSet",
-			doc: "Sets `variable` in the Lua" + #if LUMOD_HSCRIPT " and HScript " + #end " script to `value`, and creates it if it doesn't exists.",
+			doc: "Sets a global `variable` in the Lua" + #if LUMOD_HSCRIPT " and HScript " + #end " script to `value`, and creates it if it doesn't exists.",
 			access: [Access.APublic],
 			kind: FieldType.FFun({
 				ret: macro :Void,
@@ -171,8 +136,7 @@ class LuaScriptClass {
 						return;
 					}
 
-					llua.Convert.toLua(__lua, value);
-					llua.Lua.setglobal(__lua, variable);
+					__lua.setGlobalVar(variable, value);
 
 					#if LUMOD_HSCRIPT
 					if (__hscriptInterp == null)
@@ -231,18 +195,7 @@ class LuaScriptClass {
 						return null;
 					}
 
-					llua.Lua.getglobal(__lua, global);
-
-					var fieldType:Int = llua.Lua.type(__lua, -1);
-					if (fieldType == llua.Lua.LUA_TFUNCTION || fieldType <= llua.Lua.LUA_TNIL) {
-						Sys.println(__scriptPath + ': Property "' + global + '" is either null, local or a function');
-						llua.Lua.pop(__lua, 1);
-						return null;
-					}
-
-					var result:Dynamic = cast llua.Convert.fromLua(__lua, -1);
-					llua.Lua.pop(__lua, 1);
-					return result;
+					return __lua.getGlobalVar(global);
 				}
 			}),
 			pos: pos,
@@ -252,6 +205,11 @@ class LuaScriptClass {
 		var lmAddCallback:Field = {
 			name: "lmAddCallback",
 			access: [Access.APublic],
+			meta: [{
+				name: ":deprecated",
+				params: [macro "Use `lmSet` instead." ],
+				pos: pos
+			}],
 			doc: "Declares a new function in the Lua script.",
 			kind: FieldType.FFun({
 				ret: macro :Void,
@@ -270,7 +228,7 @@ class LuaScriptClass {
 						return;
 					}
 
-					llua.Lua.Lua_helper.add_callback(__lua, name, func);
+					__lua.setGlobalVar(name, func);
 				}
 			}),
 			pos: pos,
@@ -286,7 +244,7 @@ class LuaScriptClass {
 				args: [],
 				expr: macro {
 					if (__lua != null) {
-						llua.Lua.close(__lua);
+						__lua.destroy();
 						__lua = null;
 					}
 
@@ -294,17 +252,11 @@ class LuaScriptClass {
 					
 					if (lumod.Lumod.cache.existsScript(__scriptPath)) {
 						// initialize lua
-						var lua = llua.LuaL.newstate();
-
-						// initialize some stuff like basic lua libraries
-						llua.LuaL.openlibs(lua);
-						llua.Lua.init_callbacks(lua);
-
-						this.__lua = lua;
+						this.__lua = new vm.lua.Lua();
 
 						//add callbacks so the script has some purpose
 						lmAddCallback("close", function() {
-							llua.Lua.close(__lua);
+							__lua.destroy();
 							__lua = null;
 						});
 
@@ -368,7 +320,7 @@ class LuaScriptClass {
 						}
 
 						// load the file and execute it
-						llua.LuaL.dostring(lua, lumod.Lumod.cache.getScript(__scriptPath));
+						__lua.run(lumod.Lumod.cache.getScript(__scriptPath));
 					}
 					else if (__scriptPath != null) {
 						Sys.println(__scriptPath + ": Couldn't initialize LUA script for class \"" + $v{className} + "\" please create a new script in '" + __scriptPath + "'.");
@@ -382,7 +334,7 @@ class LuaScriptClass {
 		var luaField:Field = {
 			name: "__lua",
 			access: [Access.APrivate],
-			kind: FieldType.FVar(macro : llua.State),
+			kind: FieldType.FVar(macro : vm.lua.Lua),
 			pos: pos,
 		};
 		daFields.push(luaField);
