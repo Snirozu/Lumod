@@ -1,11 +1,19 @@
 # Lumod
-Framework for modding compiled classes with Lua using Haxe macros and linc_luajit.
+Framework for modding compiled classes with Lua using Haxe macros and LuaJIT.
 
-## How to use this??
-### Setup
-Install using:
+## Setup
+### Installing
+Install LuaJIT backend using:
 ```
 haxelib git linc_luajit https://github.com/AndreiRudenko/linc_luajit
+```
+(or ideally my fork of it) 
+```
+haxelib git linc_luajit https://github.com/Snirozu/linc_luajit
+```
+
+And then `lumod` using:
+```
 haxelib install lumod
 ```
 Then you can use `lumod.LuaScriptClass.build("script.lua")` build macro in your project in any class. <br>

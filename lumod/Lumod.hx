@@ -36,4 +36,9 @@ class Lumod {
 		lumod.addons.FlixelAddon,
 		#end
 	];
+
+	/**
+	 * If `true`, this calls `Lua.init_callbacks` on every script initialization
+	 */
+	public static var initializeLuaCallbacks:Bool = true;
 }

@@ -1,3 +1,6 @@
+# 2.1.0
+* Added `Lumod.initializeLuaCallbacks`
+
 # 2.0.0
 * Changed the prefix of Lumod functions from `lua` to `lm`
 * Added post constructor callback: `new`

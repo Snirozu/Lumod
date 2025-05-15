@@ -1,5 +1,9 @@
 package lumod;
 
+#if !(linc_luajit)
+#error "You need to install the 'linc_luajit' library first!"
+#end
+
 import haxe.macro.Context;
 import haxe.macro.Expr;
 
@@ -298,7 +302,8 @@ class LuaScriptClass {
 
 						// initialize some stuff like basic lua libraries
 						llua.LuaL.openlibs(lua);
-						llua.Lua.init_callbacks(lua);
+						if (lumod.Lumod.initializeLuaCallbacks)
+							llua.Lua.init_callbacks(lua);
 
 						this.__lua = lua;
 
